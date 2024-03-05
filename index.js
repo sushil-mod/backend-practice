@@ -9,6 +9,33 @@ app.use(bodyParser.json());
 
 let todos = []
 let counter = 1;
+let USER = []
+
+app.post("/login",(req,res)=>{
+    const { username , password } = req.body;
+    const isUser = USER?.some((user) => user?.username === username);
+    if(isUser){
+        const user = USER?.find((user) => user?.username === username);
+        if(user?.password === password){
+            res.send({message:"Logged in successfully"});
+        } 
+        res.send({message:"Incorrect Password"})
+
+    }else{
+        res.send({message:"Invalid Username"});
+    }
+});
+
+app.post("/signin",(req,res)=>{
+    const {username,password} = req.body;
+    const isExist = USER?.some((user) => user?.username === username);
+    if(isExist){
+        res.send({message:"User already Exist"})
+    }else{
+        USER = [...USER,{username,password}];
+        res.send({message:"User has been registered successfully"});
+    }
+});
 
 app.get("/todos",(req,res)=>{
     res.send({data:todos});
