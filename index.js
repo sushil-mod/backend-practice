@@ -10,7 +10,6 @@ app.use(bodyParser.json());
 let todos = []
 let counter = 1;
 let USER = [];
-let CART = [];
 
 app.post("/login",(req,res)=>{
     const { username , password } = req.body;
