@@ -25,6 +25,7 @@ interface User {
 interface RequestedUser extends Request{
     user:User
 }
+console.log("server");
 
 let USERS:Array<User> = [];
 let secret = "todoAppSceret";
