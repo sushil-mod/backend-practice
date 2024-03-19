@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const uuid_1 = require("uuid");
+const zod_1 = require("zod");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 let port = 8000;
@@ -9,8 +10,13 @@ app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }));
+console.log("server");
 let USERS = [];
 let secret = "todoAppSceret";
+const userLoginSchema = zod_1.z.object({
+    username: zod_1.z.string().min(1, "Username is required"),
+    password: zod_1.z.string().min(5, "Password must have atleast 5 character")
+});
 const authenticateUser = (req, res, next) => {
     console.log("middlewarre");
     const authorization = req.headers['authorization'];
@@ -32,19 +38,26 @@ const authenticateUser = (req, res, next) => {
     }
 };
 app.post("/login", (req, res) => {
-    console.log("login");
-    const { username, password } = req.body;
-    const isUser = USERS === null || USERS === void 0 ? void 0 : USERS.some((user) => (user === null || user === void 0 ? void 0 : user.username) === username);
-    if (isUser) {
-        const user = USERS === null || USERS === void 0 ? void 0 : USERS.find((user) => (user === null || user === void 0 ? void 0 : user.username) === username);
-        if ((user === null || user === void 0 ? void 0 : user.password) === password) {
-            const token = jwt.sign(req.body, secret);
-            res.status(200).send({ message: "Logged in successfully", token });
+    try {
+        const { username, password } = userLoginSchema.parse(req.body);
+        const isUser = USERS === null || USERS === void 0 ? void 0 : USERS.some((user) => (user === null || user === void 0 ? void 0 : user.username) === username);
+        if (isUser) {
+            const user = USERS === null || USERS === void 0 ? void 0 : USERS.find((user) => (user === null || user === void 0 ? void 0 : user.username) === username);
+            if ((user === null || user === void 0 ? void 0 : user.password) === password) {
+                const token = jwt.sign(req.body, secret);
+                res.status(200).send({ message: "Logged in successfully", token });
+            }
+            res.status(401).send({ message: "Incorrect Credential" });
         }
-        res.status(401).send({ message: "Incorrect Credential" });
+        else {
+            res.status(401).send({ message: "Incorrect Credential" });
+        }
     }
-    else {
-        res.status(401).send({ message: "Incorrect Credential" });
+    catch (error) {
+        if (error instanceof zod_1.ZodError) {
+            console.log("Error", error.issues);
+            return res.status(400).json(error.issues.map(({ message }) => message));
+        }
     }
 });
 app.post("/signin", (req, res) => {

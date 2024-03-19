@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from 'uuid';
+import {z,ZodError} from "zod";
+
 const express = require("express");
 const jwt = require("jsonwebtoken");
 let port = 8000;
@@ -30,6 +32,12 @@ console.log("server");
 let USERS:Array<User> = [];
 let secret = "todoAppSceret";
 
+const userLoginSchema = z.object({
+    username:z.string().min(1,"Username is required"),
+    password:z.string().min(5,"Password must have atleast 5 character")
+
+})
+
 const authenticateUser = (req:RequestedUser,res:Response,next:NextFunction) => {
     console.log("middlewarre");
     const authorization = req.headers['authorization'];
@@ -52,20 +60,27 @@ const authenticateUser = (req:RequestedUser,res:Response,next:NextFunction) => {
 }
 
 app.post("/login",(req:Request,res:Response)=>{
-    console.log("login");
-    const { username , password } = req.body;
-    const isUser = USERS?.some((user) => user?.username === username);
-    if(isUser){
-        const user = USERS?.find((user) => user?.username === username);
-        if(user?.password === password){
-            const token = jwt.sign(req.body,secret);
-            res.status(200).send({message:"Logged in successfully",token});
-        } 
-        res.status(401).send({message:"Incorrect Credential"})
-
-    }else{
-        res.status(401).send({message:"Incorrect Credential"});
-    }
+    try {
+        const { username , password } = userLoginSchema.parse(req.body);
+        const isUser = USERS?.some((user) => user?.username === username);
+        if(isUser){
+            const user = USERS?.find((user) => user?.username === username);
+            if(user?.password === password){
+                const token = jwt.sign(req.body,secret);
+                res.status(200).send({message:"Logged in successfully",token});
+            } 
+            res.status(401).send({message:"Incorrect Credential"})
+    
+        }else{
+            res.status(401).send({message:"Incorrect Credential"});
+        }    
+    } catch (error ) {
+        if(error instanceof ZodError){
+            console.log("Error",error.issues)
+            return res.status(400).json(error.issues.map(({message}) =>message))
+        }
+    }    
+    
 });
 
 app.post("/signin",(req:Request,res:Response)=>{
