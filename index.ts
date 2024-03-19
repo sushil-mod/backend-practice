@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { v4 as uuidv4 } from 'uuid';
 const express = require("express");
 const jwt = require("jsonwebtoken");
 let port = 8000;
@@ -17,76 +18,124 @@ interface Todo {
 interface User {
     username:string,
     password:string,
-    isActive:boolean
+    isActive:boolean,
+    todos:Todo[]
 }
-interface RequestedUser extends Request {
+
+interface RequestedUser extends Request{
     user:User
 }
 
-let todos:Array<Todo> = [];
-let counter = 1;
-let USER:Array<User> = [];
+let USERS:Array<User> = [];
 let secret = "todoAppSceret";
 
 const authenticateUser = (req:RequestedUser,res:Response,next:NextFunction) => {
+    console.log("middlewarre");
     const authorization = req.headers['authorization'];
+    console.log("authorization",authorization);
     const token = authorization?.split(" ")[1];
+   
     if(!token){
         res.send({message:"token not Found"});
     }
-    jwt.verify(token,secret,(err:Error,user:User)=>{
-        if(err){
-            res.send({message:"Unauthorized"})
-        }
+    let decodedToken = jwt.verify(token,secret);
+    console.log("decodedToken",decodedToken);
+    let user = USERS.find(userItem => userItem.username === decodedToken.username );
+    console.log("user",user);
+    if(user){
         req.user = user;
         next();
-    })
+    }else{
+        res.status(400).send({message:"Unauthorized"});
+    }
 }
 
-app.post("/login",(req:RequestedUser,res:Response)=>{
+app.post("/login",(req:Request,res:Response)=>{
+    console.log("login");
     const { username , password } = req.body;
-    const isUser = USER?.some((user) => user?.username === username);
+    const isUser = USERS?.some((user) => user?.username === username);
     if(isUser){
-        const user = USER?.find((user) => user?.username === username);
+        const user = USERS?.find((user) => user?.username === username);
         if(user?.password === password){
             const token = jwt.sign(req.body,secret);
-            res.send({message:"Logged in successfully",token});
+            res.status(200).send({message:"Logged in successfully",token});
         } 
-        res.send({message:"Incorrect Password"})
+        res.status(401).send({message:"Incorrect Credential"})
+
     }else{
-        res.send({message:"Invalid Username"});
+        res.status(401).send({message:"Incorrect Credential"});
     }
 });
 
-app.post("/signin",(req:RequestedUser,res:Response)=>{
-    const {username,password} = req.body;
-    const isExist = USER?.some((user) => user?.username === username);
+app.post("/signin",(req:Request,res:Response)=>{
+    console.log("signin");
+    const {username,password}:User = req.body;
+    const isExist = USERS?.some((user) => user?.username === username);
     if(isExist){
-        res.send({message:"User already Exist"})
+        res.status(409).send({message:"User already Exist"})
     }else{
-        USER=[...USER,{username,password,isActive:false}]
+        let newUser:User = {
+            username,
+            password,
+            isActive:true,
+            todos:[]
+        }
+        USERS=[...USERS,newUser];
+
         const token = jwt.sign({username,password},secret);
-        res.send({message:"User has been registered successfully",token});
+        
+        res.status(200).send({message:"User has been registered successfully",token});
     }
 });
+
 app.get("/todos",authenticateUser,(req:RequestedUser,res:Response)=>{
-    res.send({data:todos});
+    console.log("user");
+    const { user } = req;
+    console.log("user",user);
+    res.status(200).send({data:user.todos});
 });
+
 app.get("/todos/:id",authenticateUser,(req:RequestedUser,res:Response)=>{
-    const {id} = req.params;
-    let resposne = todos?.find((todo) => todo?.id === id )
-    res.send({data:resposne});
+    const {id } = req.params;
+    const { user } = req;
+    let todo = user.todos.find(ele=>ele.id === id);
+    if(todo){
+        res.status(200).send({data:todo});
+    }{
+        res.status(200).send({message:"No Todo for this id"});    
+    }
 });
+
 app.post("/todo",authenticateUser,(req:RequestedUser,res:Response)=>{
-    const reqBody= req.body;
-    let newTodo = {...reqBody,id:counter};
-    todos = [...todos,newTodo];
-    counter++ ;
-    res.send({data:newTodo});
+    const reqBody = req.body;
+    const { user } = req;
+    let newTodo:Todo = {
+        title:reqBody.title,
+        description:reqBody.description,
+        id:uuidv4()
+    }
+    const updatedUserTodo = [...user.todos , newTodo];
+    USERS.forEach(item => {
+        if(item.username === user.username){
+            item.todos=updatedUserTodo;
+        }
+        return item
+    });
+    res.status(200).send({data:newTodo,message:"Todo added successfully"});
 });
+
 app.delete("/todo/:id",authenticateUser,(req:RequestedUser,res:Response)=>{
-    const {id} = req.query;
-    todos = todos?.filter((todo) =>todo?.id === id);
+    const {id} = req.params;
+    const {user} = req;
+
+    let todos = user.todos?.filter((todo) =>todo.id !== id);
+    
+    USERS.forEach(item => {
+        if(item.username === user.username){
+            item.todos=todos;
+        }
+        return item;
+    });
     res.send("todo deleted successfully");
 });
 
