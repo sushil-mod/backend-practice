@@ -20,7 +20,6 @@ export function  authenticateUser (req:Request,res:Response,next:NextFunction){
         
     }else{
         res.status(400).send({message:"Unauthorized"});
-    
     }
 
 }

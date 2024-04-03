@@ -9,7 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 export async function getTodos(req:Request,res:Response) {
     try {
         const { user } = req;
-        res.status(200).send({data:user.todos});
+        res.status(200).json({data:user.todos});
+        return
     } catch (error) {
         if(error instanceof ZodError){
             return res.status(400).json(error.issues.map(({message}) =>message))
