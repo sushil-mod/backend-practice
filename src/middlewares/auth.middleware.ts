@@ -9,7 +9,7 @@ export function  authenticateUser (req:Request,res:Response,next:NextFunction){
     const authorization = req.headers['authorization'];
     const token = authorization?.split(" ")[1];
     if(!token){
-        return res.send({message:"token not Found"});
+        return res.status(401).send({message:"token not Found"});
         
     }
     let decodedToken = jwt.verify(token,secret) as User;

@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function getTodos(req:Request,res:Response) {
     try {
         const { user } = req;
-        res.status(200).json({data:user.todos});
+        res.status(200).json({statusCode:200,data:user.todos});
         return
     } catch (error) {
         if(error instanceof ZodError){
