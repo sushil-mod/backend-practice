@@ -9,7 +9,7 @@ export function  authenticateUser (req:Request,res:Response,next:NextFunction){
     const authorization = req.headers['authorization'];
     const token = authorization?.split(" ")[1];
     if(!token){
-        return res.status(401).send({message:"token not Found"});
+        return res.status(401).json({statusCode:401,message:"Unauthorized"});
         
     }
     let decodedToken = jwt.verify(token,secret) as User;
@@ -19,7 +19,7 @@ export function  authenticateUser (req:Request,res:Response,next:NextFunction){
         next();
         
     }else{
-        res.status(400).send({message:"Unauthorized"});
+        res.status(401).json({statusCode:401,message:"Unauthorized"});
     }
 
 }

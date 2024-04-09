@@ -24,8 +24,10 @@ export async function getTodoById (req:Request,res:Response){
     let todo = user.todos.find(ele=>ele.id === id);
     if(todo){
         res.status(200).send({data:todo});
+        return
     }{
         res.status(200).send({message:"No Todo for this id"});    
+        return
     }
 }
 

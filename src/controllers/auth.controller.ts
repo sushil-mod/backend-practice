@@ -16,13 +16,15 @@ export async function userLogin(req:Request,res:Response) {
                 if(user?.password === password){
                     const token = jwt.sign(req.body,secret);
                     res.status(200).send({message:"Logged in successfully",token});
+                    return
                 } 
                 res.status(401).send({message:"Incorrect Credential"})
-        
+                return;
             }else{
-                res.status(401).send({message:"Incorrect Credential"});
+                res.status(401).send({message:"Incorrect Credentials"});
+                return;
             }    
-    } catch (error ) {
+    } catch (error) {
         if(error instanceof ZodError){
             return res.status(400).json(error.issues.map(({message}) =>message))
         }
@@ -35,7 +37,8 @@ export async function userSignin(req:Request,res:Response){
         const isExist = USERS?.some((user) => user?.username === username);
 
         if(isExist){
-            res.status(409).send({message:"User already Exist"})
+            res.status(409).send({message:"User already exists"});
+            return;
         }else{
             let newUser:User = {
                 username,
@@ -43,15 +46,20 @@ export async function userSignin(req:Request,res:Response){
                 isActive:true,
                 todos:[]
             }
-            // USERS=[...USERS,newUser]
             USERS.push(newUser);
-            
+            let data = {
+                username:newUser.username,
+                isActive:newUser.isActive,
+                todos:newUser.todos
+            }
             const token = jwt.sign({username,password},secret);
-            res.status(200).send({message:"User has been registered successfully",data:newUser,token});
+            res.status(200).send({message:"User has been registered successfully",data,token});
+            return;
         }
     } catch (error) {
         if(error instanceof ZodError){
-            return res.status(400).json(error.issues.map(({message}) =>message))
+            res.status(400).json(error.issues.map(({message}) =>message))
+            return; 
         }
     }
 }
