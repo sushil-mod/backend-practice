@@ -62,6 +62,7 @@ describe("All Todos Route",()=>{
                 let todoId = "adasfrea"
                 const response = await request(app)
                     .get(`/todos/${todoId}`)
+                    .set("Authorization", 'Bearer ' + token)
                     .expect('Content-Type', /json/)
                     .expect(400)
                 expect(response.body.statusCode).toBe(400)
@@ -163,7 +164,7 @@ describe("All Todos Route",()=>{
                 expect(response.body.statusCode).toBe(200);
                 expect(response.body.data).toEqual(expect.objectContaining({
                     id:testTodoId,
-                    message:"Todo deleted Successfully"
+                    message:"Todo deleted successfully"
                 })) 
             })
         })

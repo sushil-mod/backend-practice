@@ -2,11 +2,11 @@ import request from "supertest"
 import { app } from "../app"
 
 
-describe("All Authentication Route",()=>{
+describe ("All Authentication Route",()=>{
     let currentUser = { username:"sushil",password:"sushil@123"}
   
     describe("POST /login",()=>{
-        
+    
         describe("Given User not Exists",()=>{
             it("should return Inavlid Credential",async ()=>{
                const response = await request(app)
@@ -15,7 +15,7 @@ describe("All Authentication Route",()=>{
                     .expect('Content-Type', /json/)
                     .expect(401)
                 expect(response.body.statusCode).toBe(401)
-                expect(response.body.message).toBe("Unauthorized")
+                expect(response.body.message).toBe("Incorrect Credential")
             })
         })
         describe("Given User wrong password",()=>{
@@ -26,7 +26,7 @@ describe("All Authentication Route",()=>{
                     .expect('Content-Type', /json/)
                     .expect(401)
                 expect(response.body.statusCode).toBe(401)
-                expect(response.body.message).toBe("Unauthorized")
+                expect(response.body.message).toBe("Incorrect Credential")
             })
         })
 
@@ -81,7 +81,7 @@ describe("All Authentication Route",()=>{
                     .expect('Content-Type', /json/)
                     .expect(200)
                 expect(response.body.statusCode).toBe(200);
-                expect(response.body.message).toBe("User created successfully");
+                expect(response.body.message).toBe("User has been registered successfully");
                 expect(response.body.token).toEqual(expect.any(String));
                 expect(response.body.data).toEqual(expect.objectContaining({
                     username:newUser.username,
